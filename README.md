@@ -8,6 +8,9 @@ By leveraging the high‑speed **Kaspa BlockDAG** as both a randomness source an
 Learn how the randomness beacon works under the hood:
 https://kodinglsfun.substack.com/p/a-verifiable-cheatresistant-hybrid
 
+I'm currently working on the core Kaspa integration with demos at the repo below. This is also where you can find the randomness beacon and demo:
+https://github.com/peavey2787/minKasWasm
+
 ---
 
 ## 🔧 Core Components
