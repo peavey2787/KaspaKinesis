@@ -5,6 +5,12 @@
 
 By leveraging the high‑speed **Kaspa BlockDAG** as both a randomness source and a global relay, ꓘK enables real‑time, fair, and auditable gameplay **without servers, matchmaking systems, or NAT‑traversal infrastructure**.
 
+## 📄 Formal Specifications
+
+The ꓘK protocol is being formalized through the IETF (Internet Engineering Task Force). 
+* **Protocol Architecture:** [draft-koding-kktp-00](https://datatracker.ietf.org/doc/draft-koding-kktp/00/)
+* **Security Threat Model:** [draft-koding-kktp-threat-model](https://datatracker.ietf.org/doc/draft-koding-kktp-threat-model/)
+
 Learn how the randomness beacon works under the hood:
 https://kodinglsfun.substack.com/p/a-verifiable-cheatresistant-hybrid
 
