@@ -8,8 +8,17 @@ By leveraging the high‑speed **Kaspa BlockDAG** as both a randomness source an
 ## 📄 Formal Specifications
 
 The ꓘK protocol is being formalized through the IETF (Internet Engineering Task Force). 
+
 * **Protocol Architecture:** [draft-koding-kktp-00](https://datatracker.ietf.org/doc/draft-koding-kktp/00/)
 * **Security Threat Model:** [draft-koding-kktp-threat-model](https://datatracker.ietf.org/doc/draft-koding-kktp-threat-model/)
+
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/cb720171-e917-42b9-9bb9-a9a18677e7cf" width="100%" style="max-width: 800px;" controls muted>
+    Your browser does not support the video tag.
+  </video>
+  <br>
+  <em>PoC: Peer-to-Peer Relay & Randomness Proof of Concept</em>
+</p>
 
 Learn how the randomness beacon works under the hood:
 https://kodinglsfun.substack.com/p/a-verifiable-cheatresistant-hybrid
@@ -72,3 +81,8 @@ Coming soon:
 
 ---
 
+## ☕ Support the Research
+If you find this protocol useful or want to support serverless BlockDAG research:
+* **KASPA:** `kaspa:qpfsh8feaq5evaum5auq9c29fvjnun0mrzj5ht6sz3sz09ptcdaj6qjx9fkug`
+
+---
