@@ -108,7 +108,7 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.6 }}
             className="mt-16 flex flex-wrap items-center justify-center gap-3"
           >
-            {['Kaspa BlockDAG', 'VRF', 'NIST SP 800-22', 'P2P Relay', 'WebRTC'].map((tech) => (
+            {['Kaspa BlockDAG', 'VRF', 'NIST SP 800-22', 'P2P Relay'].map((tech) => (
               <span key={tech} className="tag">
                 {tech}
               </span>
