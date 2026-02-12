@@ -160,6 +160,18 @@ export class SettingsMenu extends EventEmitter {
     `;
     nodeSection.appendChild(nodeHint);
 
+    const nodeDirectConnectHint = document.createElement("div");
+    nodeDirectConnectHint.textContent =
+      "For direct connection: host this web app locally for LAN use, or open/forward your node port and enter your public IP.";
+    nodeDirectConnectHint.style.cssText = `
+      font-size: 0.72rem;
+      color: ${COLORS.TEXT_SECONDARY};
+      opacity: 0.7;
+      text-align: center;
+      line-height: 1.35;
+    `;
+    nodeSection.appendChild(nodeDirectConnectHint);
+
     panel.appendChild(nodeSection);
 
     const buttons = document.createElement("div");
