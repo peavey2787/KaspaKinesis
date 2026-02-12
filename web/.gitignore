@@ -1,0 +1,66 @@
+# --- Dependencies ---
+node_modules/
+*/node_modules/
+jspm_packages/
+
+# --- Next.js / Build Outputs ---
+.next/
+*/.next/
+out/
+dist/
+build/
+.vercel
+*/.vercel
+*.tsbuildinfo
+next-env.d.ts
+next.lock/
+web/next.lock/
+
+# --- Lockfiles & Metadata ---
+# We usually keep package-lock.json or yarn.lock, but ignore others
+.pnp*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdk
+!.yarn/versions
+# Specific ignore for the Next.js lock files/cache
+.next-lock.json
+
+# --- Environment & Secrets ---
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# --- Debug & Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs
+*.log
+
+# --- OS Junk ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+.stack-work/
+
+# --- Editor Specific ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
