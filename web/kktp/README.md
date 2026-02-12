@@ -67,12 +67,7 @@ game.on('opponentHeartbeat', (heartbeat) => {
 ```
 
 **Tip:** Always use the event-driven API for multiplayer updates. Do not poll or call internal validation methods directly.
-const auditData = game.getAuditData();
-const verdict = await game.auditCheating(auditData);
-console.log('Audit verdict:', verdict.verdict);
 
-const parsed = game.parseAnchor(auditData.anchorChain?.chain?.[0]);
-console.log('Parsed anchor:', parsed);
 ```
 
 ## Lobbies and Messaging
@@ -151,6 +146,16 @@ log.info('Engine initialized and ready.');
 
 ```js
 await game.shutdown();
+```
+## Anti-Cheat
+
+```js
+const auditData = game.getAuditData();
+const verdict = await game.auditCheating(auditData);
+console.log('Audit verdict:', verdict.verdict);
+
+const parsed = game.parseAnchor(auditData.anchorChain?.chain?.[0]);
+console.log('Parsed anchor:', parsed);
 ```
 
 ## Facade Overview

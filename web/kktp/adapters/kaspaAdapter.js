@@ -2,8 +2,8 @@
 // Network Adapter Interface - Bridges KKTP components to KaspaPortal
 // This abstraction allows swapping the underlying network (e.g., Kaspa → another chain)
 
-import { BLOCKCHAIN } from '../core/constants.js';
-import { kaspaPortal } from '../engine/kaspa/kaspaPortal.js';
+import { BLOCKCHAIN } from "../core/constants.js";
+import { kaspaPortal } from "../engine/kaspa/kaspaPortal.js";
 
 /**
  * KaspaAdapter - Bridge between KKTP protocol components and KaspaPortal.
@@ -26,7 +26,7 @@ import { kaspaPortal } from '../engine/kaspa/kaspaPortal.js';
  */
 export class KaspaAdapter {
   /**
-  * @param {import('@/kktp/engine/kaspa/kaspaPortal.js').KaspaPortal} [portal]
+   * @param {import('@/kktp/engine/kaspa/kaspaPortal.js').KaspaPortal} [portal]
    */
   constructor(portal = kaspaPortal) {
     if (!portal) {
@@ -101,6 +101,14 @@ export class KaspaAdapter {
    */
   async getAddress() {
     return this._portal.address;
+  }
+
+  /**
+   * List all wallet filenames stored in browser storage.
+   * @returns {Promise<Array>} Array of wallet descriptors
+   */
+  async getAllWallets() {
+    return await this._portal.getAllWallets();
   }
 
   /**
@@ -321,16 +329,15 @@ export class KaspaAdapter {
    */
   async manualSend(options) {
     const payload = options?.payload;
-    const payloadStr = typeof payload === 'string' ? payload : '';
-    const payloadHex = payloadStr.startsWith('0x') ? payloadStr.slice(2) : payloadStr;
+    const payloadStr = typeof payload === "string" ? payload : "";
+    const payloadHex = payloadStr.startsWith("0x")
+      ? payloadStr.slice(2)
+      : payloadStr;
     const isHeartbeatPayload =
       payloadStr.startsWith(BLOCKCHAIN.PREFIX_HEARTBEAT) ||
       payloadHex.toLowerCase().startsWith(BLOCKCHAIN.PREFIX_HEARTBEAT_HEX);
-    if (
-      isHeartbeatPayload &&
-      !this._heartbeatAnchorsEnabled
-    ) {
-      throw new Error('Heartbeat anchors disabled');
+    if (isHeartbeatPayload && !this._heartbeatAnchorsEnabled) {
+      throw new Error("Heartbeat anchors disabled");
     }
     return await this._portal.manualSend(options);
   }
