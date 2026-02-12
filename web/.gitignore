@@ -42,8 +42,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-logs
 *.log
+# Only ignore a top-level logs folder if you actually use one for temp files
+# /logs
 
 # --- OS Junk ---
 .DS_Store
