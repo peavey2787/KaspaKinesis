@@ -38,7 +38,7 @@ const demos: DemoItem[] = [
       </>
     ),
     icon: Play,
-    href: '#',
+    href: '/#demo-video',
     cta: 'Watch Demo',
     status: 'live',
   },

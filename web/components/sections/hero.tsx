@@ -3,11 +3,8 @@
 import { motion } from 'framer-motion'
 import { Play, ExternalLink, Github, ChevronDown } from 'lucide-react'
 import { ParticleBackground, BlockDAGBackground } from '@/components/backgrounds'
-import { useState } from 'react'
 
 export function HeroSection() {
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
-
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background layers */}
@@ -79,13 +76,10 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <button
-              onClick={() => setIsVideoModalOpen(true)}
-              className="btn-secondary flex items-center gap-2 text-lg px-8 py-4 group"
-            >
+            <a href="#demo-video" className="btn-secondary flex items-center gap-2 text-lg px-8 py-4 group">
               <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
               Watch 3-Minute Demo
-            </button>
+            </a>
             <a
               href="/kktp/game/index.html"
               className="btn-secondary flex items-center gap-2 text-lg px-8 py-4"
@@ -136,46 +130,6 @@ export function HeroSection() {
         </motion.div>
       </div>
 
-      {/* Video Modal */}
-      {isVideoModalOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-xl p-4"
-          onClick={() => setIsVideoModalOpen(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="relative w-full max-w-5xl aspect-video bg-card rounded-xl border border-border overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setIsVideoModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 text-foreground hover:bg-background transition-colors"
-            >
-              ✕
-            </button>
-            {/* Placeholder for video */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <Play className="w-16 h-16 text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Demo video would load here</p>
-                <p className="text-sm text-muted-foreground/60 mt-2">
-                  3-minute walkthrough of{' '}
-                  <span className="font-semibold">
-                    <span className="text-primary">ꓘ</span>
-                    <span className="text-secondary">K</span>
-                  </span>{' '}
-                  capabilities
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
     </section>
   )
 }

@@ -78,7 +78,7 @@ export function Navbar() {
                 <Github className="w-4 h-4" />
                 GitHub
               </a>
-              <a href="#demos" className="btn-secondary text-sm">
+              <a href="#demo-video" className="btn-secondary text-sm">
                 Watch Demo
               </a>
             </div>
@@ -131,7 +131,7 @@ export function Navbar() {
                   transition={{ delay: 0.3 }}
                   className="mt-6 flex flex-col items-center gap-3 px-4 w-full"
                 >
-                  <a href="#demos" className="btn-secondary text-center" onClick={() => setIsMobileMenuOpen(false)}>
+                  <a href="#demo-video" className="btn-secondary text-center" onClick={() => setIsMobileMenuOpen(false)}>
                     Watch Demo
                   </a>
                   <a

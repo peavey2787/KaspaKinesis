@@ -624,7 +624,7 @@ export function VRFVisualizer() {
             {blocks.length === 0 && !isConnecting && isAwaitingBlocks && (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-muted-foreground text-sm">
                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                <span>Waiting for blocks...</span>
+                <span>Filling up buffer...</span>
               </div>
             )}
             {blocks.length === 0 && !isConnecting && !isAwaitingBlocks && (

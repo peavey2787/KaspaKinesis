@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/navbar'
 import {
   HeroSection,
+  DemoVideoSection,
   ProblemSolutionSection,
   FeaturesSection,
   ArchitectureSection,
@@ -15,6 +16,7 @@ export default function HomePage() {
     <main className="relative">
       <Navbar />
       <HeroSection />
+      <DemoVideoSection />
       <ProblemSolutionSection />
       <FeaturesSection />
       <ArchitectureSection />
