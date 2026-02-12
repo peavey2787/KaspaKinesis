@@ -1,0 +1,8 @@
+export { HeroSection } from './hero'
+export { ProblemSolutionSection } from './problem-solution'
+export { FeaturesSection } from './features'
+export { ArchitectureSection } from './architecture'
+export { DemosSection } from './demos'
+export { EconomicsSection } from './economics'
+export { FAQSection } from './faq'
+export { Footer } from './footer'
