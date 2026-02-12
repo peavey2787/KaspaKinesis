@@ -1,5 +1,5 @@
-🌀 Kaspa Kinesis (ꓘK)
-The 0 managed server Game Engine powered by the Kaspa BlockDAG
+# 🌀 Kaspa Kinesis (ꓘK)
+The 0 managed server game engine powered by the Kaspa BlockDAG
 
 Kaspa Kinesis (ꓘK) is a groundbreaking infrastructure layer that enables real-time, multiplayer gaming directly on top of the Kaspa network. By utilizing the BlockDAG as a global messaging relay and a source of verifiable entropy, ꓘK eliminates the need for centralized game servers and matchmaking backends.
 
