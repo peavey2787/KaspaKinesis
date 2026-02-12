@@ -15,7 +15,7 @@ Kaspa Kinesis (ꓘK) is a groundbreaking infrastructure layer that enables real-
 ## 🛠️ Quick Start
 
 Explore the app thanks to vercel:
-https://kktest-silk.vercel.app/
+https://kaspakinesis.vercel.app
 
 To explore the engine locally:
 
