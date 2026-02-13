@@ -611,7 +611,7 @@ export class LobbyManager {
         dmMailboxId: dmMailboxId?.slice(0, 16),
       });
 
-      return { pending: true, lobbyId: lobbyDiscovery.sid, dmMailboxId };
+      return { pending: true, lobbyId: lobbyDiscovery.sid, dmMailboxId, lobbyName: lobbyDiscovery?.meta?.lobby_name ?? null };
     } catch (err) {
       this._setState(LOBBY_STATES.IDLE);
       this._pendingJoin = null;
