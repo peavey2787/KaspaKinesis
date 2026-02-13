@@ -5,10 +5,8 @@ Kaspa Kinesis (ꓘK) is a groundbreaking infrastructure layer that enables real-
 
 > ### 📍 Navigation
 > * [🏠 Project Hub](./web/README.md)
+> * [🎮 KKGameEngine Guide](./web/kktp/README.md)
 > * [🏛️ Kaspa Portal Guide](./web/kktp/engine/kaspa/FACADE_GUIDE.md)
-> * [🔍 Intelligence Guide](./web/kktp/engine/kaspa/intelligence/README.md)
-> * [🔍 Lobby Guide](./web/kktp/lobby/README.md)
-> * [🔍 Low Level Guide](./web/kktp/engine/kaspa/LOW_LEVEL_SDK.md)
 > * [📡 KKTP Protocol](./web/kktp/protocol/docs/KKTP_PROTOCOL.md)
 > * [🎮 DAG Dasher Demo](./web/kktp/game/README.md)
 

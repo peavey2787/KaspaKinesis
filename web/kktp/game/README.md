@@ -24,7 +24,7 @@ Unlike centralized games that rely on system time, DAG Dasher uses the Kaspa Blo
 - **Merkle Tree Moves**: Every player move is hashed into an incremental merkle tree
 - **VRF Verification**: Moves are folded with VRF output for randomness proof
 - **Immediate Anchoring**: Moves are anchored to Kaspa blockchain every 500ms
-- **Integrity Shield**: Visual indicator showing game state
+- **Integrity Shield**: (Coming soon) Visual indicator showing game state
   - 🟢 Green: All OK
   - 🟠 Orange: 5s since last opponent move
   - 🔴 Red (flashing): Cheat detected
