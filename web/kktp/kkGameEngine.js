@@ -48,10 +48,7 @@ import { parseAnchor } from "./blockchain/anchorParser.js";
 import { SessionFacade } from "./protocol/sessions/sessionFacade.js";
 import { LobbyFacade, LOBBY_STATES } from "./lobby/lobbyFacade.js";
 import { MoveEvent } from "./blockchain/moveProcessor.js";
-import {
-  parseHeartbeatHex,
-  enrichMoves,
-} from "./blockchain/anchor/heartbeatParser.js";
+import { parseHeartbeatHex, enrichMoves } from "./blockchain/anchor/heartbeatParser.js";
 import { Logger, LogModule } from "./core/logger.js";
 import { BLOCKCHAIN } from "./core/constants.js";
 
@@ -69,7 +66,7 @@ const TIMEOUTS = Object.freeze({
   VRF: 25000,
   BLOCK_FETCH: 10000,
   QRNG: 15000,
-  LOBBY_CREATE: 40000,
+  LOBBY_CREATE:40000,
   LOBBY_JOIN: 40000,
   DISCONNECT: 5000,
 });
@@ -171,8 +168,8 @@ export class KKGameEngine {
     this._activeOperations = new Set();
     this._shuttingDown = false;
 
-    // ── Instance-scoped logging filter ──
-    // null = use global Logger settings; string = module filter
+    // ── Logging mode tracker (for this instance API surface) ──
+    // NOTE: logging() now controls GLOBAL logger settings.
     this._logModuleFilter = null;
 
     // ── Opponent heartbeat tracking ──
@@ -198,26 +195,34 @@ export class KKGameEngine {
   }
 
   /**
-   * Enable or disable internal logging for THIS instance only.
+   * Control GLOBAL logging behavior.
    *
-   * Instance-scoped: multiple KKGameEngine instances can have independent
-   * logging configurations without affecting each other.
+   * This method updates Logger's global switches so all modules follow
+   * one policy:
+   * - false: disable all logs
+   * - true: enable all logs
+   * - string / { root }: enable logs only for that module tree
    *
    * @param {boolean|string|Object} enabled - Logging configuration
-   *   - false: Disable logging for this instance
-   *   - true: Enable all logging for this instance
-   *   - string: Enable only the specified module (e.g., "kktp.kkGameEngine")
-   *   - { root: string }: Enable only the specified module root
+   *   - false: Disable all logs globally
+   *   - true: Enable all logs globally
+   *   - string: Enable only the specified module tree globally
+   *   - { root: string }: Enable only the specified module tree globally
    * @returns {KKGameEngine} For chaining
    */
   logging(enabled = false) {
     if (enabled === false) {
       this._logModuleFilter = "__disabled__";
+      Logger.resetModules();
+      Logger.setEnabled(false);
       return this;
     }
 
     if (typeof enabled === "string") {
       this._logModuleFilter = enabled;
+      Logger.resetModules();
+      Logger.setEnabled(false);
+      Logger.enableModule(enabled);
       return this;
     }
 
@@ -225,12 +230,17 @@ export class KKGameEngine {
       const moduleName = enabled.root ?? null;
       if (moduleName) {
         this._logModuleFilter = moduleName;
+        Logger.resetModules();
+        Logger.setEnabled(false);
+        Logger.enableModule(moduleName);
         return this;
       }
     }
 
-    // enabled === true: clear filter to use global settings
+    // enabled === true: show all logs globally
     this._logModuleFilter = null;
+    Logger.resetModules();
+    Logger.setEnabled(true);
     return this;
   }
 
@@ -337,109 +347,105 @@ export class KKGameEngine {
 
     this._state = GameState.INITIALIZING;
 
-    this._initPromise = this._trackOperation(
-      (async () => {
-        this._ensureNotShuttingDown();
+    this._initPromise = this._trackOperation((async () => {
+      this._ensureNotShuttingDown();
 
-        try {
-          if (!this._adapter) {
-            this._adapter = new KaspaAdapter();
-          }
-
-          // 1. Initialize WebAssembly
-          await this._withTimeout(
-            this._adapter.init(),
-            TIMEOUTS.INIT,
-            "WASM initialization timed out",
-          );
-
-          // 2. Connect to network
-          await this._withTimeout(
-            this._adapter.connect({
-              networkId: network,
-              rpcUrl,
-              onBalanceChange: (balance) => {
-                this._balanceKas = balance;
-                this._emit(GameEvent.BALANCE_CHANGED, {
-                  balance: this._balanceKas,
-                });
-                onBalanceChange?.(this._balanceKas);
-
-                // Warn if funds are low
-                if (this._balanceKas < 1) {
-                  this._emit(GameEvent.LOW_FUNDS, {
-                    balance: this._balanceKas,
-                  });
-                }
-              },
-            }),
-            TIMEOUTS.CONNECT,
-            "Network connection timed out",
-          );
-
-          // 3. Open/create wallet
-          this._walletName = walletName;
-          const walletResult = await this._withTimeout(
-            this._adapter.createOrOpenWallet({
-              password,
-              walletFilename: walletName,
-            }),
-            TIMEOUTS.WALLET,
-            "Wallet initialization timed out. Check your network and try again.",
-          );
-          this._address = walletResult.address;
-
-          // 4. Create anchor facade (handles move recording + blockchain proofs)
-          // Custom action maps can be provided later via startGame()
-          this._anchor = new KaspaAnchorFacade({
-            adapter: this._adapter,
-            customActionMap: this._customActionMap,
-            customAbilitiesMap: this._customAbilitiesMap,
-            customActionsMap: this._customActionsMap,
-            customItemsMap: this._customItemsMap,
-            customStatusMap: this._customStatusMap,
-            customEmotesMap: this._customEmotesMap,
-            customSystemMap: this._customSystemMap,
-          });
-
-          // 5. Create session facade (for multiplayer messaging)
-          this._session = new SessionFacade(this._adapter);
-
-          // 6. Setup internal event forwarding
-          this._setupEventForwarding();
-          this._startIncomingPayloadRouter();
-
-          // 7. Get initial balance
-          const balanceSompi = await this._withTimeout(
-            this._adapter.getBalance(),
-            TIMEOUTS.BALANCE,
-            "Balance fetch timed out",
-          );
-          this._balanceKas = Number(balanceSompi) / 100_000_000;
-
-          // 8. Initialize VRF
-          await this._withTimeout(
-            this._adapter.initVRF(),
-            TIMEOUTS.VRF,
-            "VRF initialization timed out",
-          );
-
-          this._state = GameState.READY;
-          this._emit(GameEvent.INITIALIZED, {
-            address: this._address,
-            balance: this._balanceKas,
-          });
-
-          return { address: this._address, balance: this._balanceKas };
-        } catch (error) {
-          this._state = GameState.ERROR;
-          this._emit(GameEvent.ERROR, { error: error.message, phase: "init" });
-          throw error;
-        } finally {
-          this._initPromise = null;
+      try {
+        if (!this._adapter) {
+          this._adapter = new KaspaAdapter();
         }
-      })(),
-    );
+
+        // 1. Initialize WebAssembly
+        await this._withTimeout(
+          this._adapter.init(),
+          TIMEOUTS.INIT,
+          "WASM initialization timed out"
+        );
+
+        // 2. Connect to network
+        await this._withTimeout(
+          this._adapter.connect({
+            networkId: network,
+            rpcUrl,
+            onBalanceChange: (balance) => {
+              this._balanceKas = balance;
+              this._emit(GameEvent.BALANCE_CHANGED, {
+                balance: this._balanceKas,
+              });
+              onBalanceChange?.(this._balanceKas);
+
+              // Warn if funds are low
+              if (this._balanceKas < 1) {
+                this._emit(GameEvent.LOW_FUNDS, { balance: this._balanceKas });
+              }
+            },
+          }),
+          TIMEOUTS.CONNECT,
+          "Network connection timed out"
+        );
+
+        // 3. Open/create wallet
+        this._walletName = walletName;
+        const walletResult = await this._withTimeout(
+          this._adapter.createOrOpenWallet({
+            password,
+            walletFilename: walletName,
+          }),
+          TIMEOUTS.WALLET,
+          "Wallet initialization timed out. Check your network and try again.",
+        );
+        this._address = walletResult.address;
+
+        // 4. Create anchor facade (handles move recording + blockchain proofs)
+        // Custom action maps can be provided later via startGame()
+        this._anchor = new KaspaAnchorFacade({
+          adapter: this._adapter,
+          customActionMap:     this._customActionMap,
+          customAbilitiesMap:  this._customAbilitiesMap,
+          customActionsMap:    this._customActionsMap,
+          customItemsMap:      this._customItemsMap,
+          customStatusMap:     this._customStatusMap,
+          customEmotesMap:     this._customEmotesMap,
+          customSystemMap:     this._customSystemMap,
+        });
+
+        // 5. Create session facade (for multiplayer messaging)
+        this._session = new SessionFacade(this._adapter);
+
+        // 6. Setup internal event forwarding
+        this._setupEventForwarding();
+        this._startIncomingPayloadRouter();
+
+        // 7. Get initial balance
+        const balanceSompi = await this._withTimeout(
+          this._adapter.getBalance(),
+          TIMEOUTS.BALANCE,
+          "Balance fetch timed out"
+        );
+        this._balanceKas = Number(balanceSompi) / 100_000_000;
+
+        // 8. Initialize VRF
+        await this._withTimeout(
+          this._adapter.initVRF(),
+          TIMEOUTS.VRF,
+          "VRF initialization timed out"
+        );
+
+        this._state = GameState.READY;
+        this._emit(GameEvent.INITIALIZED, {
+          address: this._address,
+          balance: this._balanceKas,
+        });
+
+        return { address: this._address, balance: this._balanceKas };
+      } catch (error) {
+        this._state = GameState.ERROR;
+        this._emit(GameEvent.ERROR, { error: error.message, phase: "init" });
+        throw error;
+      } finally {
+        this._initPromise = null;
+      }
+    })());
 
     return this._initPromise;
   }
@@ -495,35 +501,25 @@ export class KKGameEngine {
     this._cachedAuditData = null; // Clear stale audit cache for new game
 
     // v5: Store custom action maps if provided
-    if (options.customActionMap)
-      this._customActionMap = options.customActionMap;
-    if (options.customAbilitiesMap)
-      this._customAbilitiesMap = options.customAbilitiesMap;
-    if (options.customActionsMap)
-      this._customActionsMap = options.customActionsMap;
-    if (options.customItemsMap) this._customItemsMap = options.customItemsMap;
-    if (options.customStatusMap)
-      this._customStatusMap = options.customStatusMap;
-    if (options.customEmotesMap)
-      this._customEmotesMap = options.customEmotesMap;
-    if (options.customSystemMap)
-      this._customSystemMap = options.customSystemMap;
+    if (options.customActionMap)    this._customActionMap    = options.customActionMap;
+    if (options.customAbilitiesMap) this._customAbilitiesMap = options.customAbilitiesMap;
+    if (options.customActionsMap)   this._customActionsMap   = options.customActionsMap;
+    if (options.customItemsMap)     this._customItemsMap     = options.customItemsMap;
+    if (options.customStatusMap)    this._customStatusMap    = options.customStatusMap;
+    if (options.customEmotesMap)    this._customEmotesMap    = options.customEmotesMap;
+    if (options.customSystemMap)    this._customSystemMap    = options.customSystemMap;
 
     // If custom maps were provided, update the packer's maps
-    if (
-      options.customActionMap ||
-      options.customAbilitiesMap ||
-      options.customActionsMap
-    ) {
+    if (options.customActionMap || options.customAbilitiesMap || options.customActionsMap) {
       const { buildActionMaps } = await import("./core/constants.js");
       const maps = buildActionMaps({
-        actionMap: this._customActionMap,
-        abilitiesMap: this._customAbilitiesMap,
-        actionsMap: this._customActionsMap,
-        itemsMap: this._customItemsMap,
-        statusMap: this._customStatusMap,
-        emotesMap: this._customEmotesMap,
-        systemMap: this._customSystemMap,
+        actionMap:     this._customActionMap,
+        abilitiesMap:  this._customAbilitiesMap,
+        actionsMap:    this._customActionsMap,
+        itemsMap:      this._customItemsMap,
+        statusMap:     this._customStatusMap,
+        emotesMap:     this._customEmotesMap,
+        systemMap:     this._customSystemMap,
       });
       this._anchor?.processor?._packer?.setActionMaps?.(maps);
     }
@@ -542,7 +538,7 @@ export class KKGameEngine {
       const blocks = await this._withTimeout(
         this._adapter.getKaspaBlocks(1),
         TIMEOUTS.BLOCK_FETCH,
-        "Block fetch timed out",
+        "Block fetch timed out"
       );
       latestBlock = blocks?.[0] ?? null;
       const blockHash = latestBlock?.hash ?? null;
@@ -569,7 +565,7 @@ export class KKGameEngine {
       prefetchedQrng = await this._withTimeout(
         this._adapter.getQRNG("nist", 32),
         TIMEOUTS.QRNG,
-        "QRNG fetch timed out",
+        "QRNG fetch timed out"
       );
     } catch (e) {
       throw new Error(
@@ -755,10 +751,7 @@ export class KKGameEngine {
       try {
         this._incomingUnsubscribe();
       } catch (e) {
-        log.warn(
-          "KKGameEngine: Error unsubscribing incoming router",
-          e?.message,
-        );
+        log.warn("KKGameEngine: Error unsubscribing incoming router", e?.message);
       }
     }
     this._incomingUnsubscribe = null;
@@ -777,7 +770,7 @@ export class KKGameEngine {
         await this._withTimeout(
           this._adapter.disconnect(),
           TIMEOUTS.DISCONNECT,
-          "Disconnect timed out",
+          "Disconnect timed out"
         );
       } catch (e) {
         log.warn("KKGameEngine: Error disconnecting adapter", e?.message);
@@ -949,7 +942,7 @@ export class KKGameEngine {
     return await this._withTimeout(
       this._adapter.getKaspaBlocks(n),
       TIMEOUTS.BLOCK_FETCH,
-      "Block fetch timed out",
+      "Block fetch timed out"
     );
   }
 
@@ -969,7 +962,7 @@ export class KKGameEngine {
     const result = await this._withTimeout(
       this._adapter.getQRNG(provider, length),
       TIMEOUTS.QRNG,
-      "QRNG fetch timed out",
+      "QRNG fetch timed out"
     );
     const pulse = result?.pulse ?? result;
     if (!pulse?.pulseIndex) {
@@ -1025,7 +1018,7 @@ export class KKGameEngine {
     const result = await this._withTimeout(
       this._adapter.prove({ seedInput: seed }),
       TIMEOUTS.VRF,
-      "VRF prove operation timed out",
+      "VRF prove operation timed out"
     );
 
     const value = result.finalOutput ?? "";
@@ -1062,7 +1055,7 @@ export class KKGameEngine {
     return await this._withTimeout(
       this._adapter.shuffle(array),
       TIMEOUTS.VRF,
-      "Shuffle operation timed out",
+      "Shuffle operation timed out"
     );
   }
 
@@ -1182,7 +1175,7 @@ export class KKGameEngine {
         displayName,
       }),
       TIMEOUTS.LOBBY_CREATE,
-      "Lobby creation timed out",
+      "Lobby creation timed out"
     );
 
     return {
@@ -1206,7 +1199,7 @@ export class KKGameEngine {
     const result = await this._withTimeout(
       this._lobby.joinLobby(lobbyOrCode, displayName),
       TIMEOUTS.LOBBY_JOIN,
-      "Lobby join timed out",
+      "Lobby join timed out"
     );
     return {
       success: true,
@@ -1370,7 +1363,7 @@ export class KKGameEngine {
     const sompi = await this._withTimeout(
       this._adapter.getBalance(),
       TIMEOUTS.BALANCE,
-      "Balance fetch timed out",
+      "Balance fetch timed out"
     );
     this._balanceKas = Number(sompi) / 100_000_000;
     return this._balanceKas;
@@ -1400,7 +1393,7 @@ export class KKGameEngine {
         walletFilename: walletName,
       }),
       TIMEOUTS.WALLET,
-      "Wallet open timed out",
+      "Wallet open timed out"
     );
     if (walletResult?.address) {
       this._address = walletResult.address;
@@ -1409,7 +1402,7 @@ export class KKGameEngine {
     return await this._withTimeout(
       this._adapter.getMnemonic(),
       TIMEOUTS.WALLET,
-      "Mnemonic fetch timed out",
+      "Mnemonic fetch timed out"
     );
   }
 
@@ -1438,19 +1431,19 @@ export class KKGameEngine {
         walletFilename: walletName,
       }),
       TIMEOUTS.WALLET,
-      "Wallet open timed out",
+      "Wallet open timed out"
     );
     if (this._adapter.closeWallet) {
       await this._withTimeout(
         this._adapter.closeWallet(),
         TIMEOUTS.WALLET,
-        "Wallet close timed out",
+        "Wallet close timed out"
       );
     }
     await this._withTimeout(
       this._adapter.deleteWallet(walletName),
       TIMEOUTS.WALLET,
-      "Wallet delete timed out",
+      "Wallet delete timed out"
     );
 
     if (walletName === this._walletName) {
@@ -1479,7 +1472,62 @@ export class KKGameEngine {
         "WASM initialization timed out",
       );
     }
-    return await this._adapter.getAllWallets();
+
+    try {
+      const wallets = await this._adapter.getAllWallets();
+      if (Array.isArray(wallets) && wallets.length > 0) {
+        return wallets;
+      }
+    } catch (err) {
+      // Some environments require full wallet service initialization
+      // before walletEnumerate() works. Fall back to IndexedDB listing.
+      log.debug("KKGameEngine.getAllWallets adapter enumerate failed; using IndexedDB fallback", err?.message ?? err);
+    }
+
+    return await this._listWalletsFromIndexedDb();
+  }
+
+  /**
+   * Fallback wallet listing from the encrypted wallet metadata store.
+   * @returns {Promise<Array<{filename: string, title: string}>>}
+   */
+  async _listWalletsFromIndexedDb() {
+    if (typeof indexedDB === "undefined") return [];
+
+    return await new Promise((resolve) => {
+      const req = indexedDB.open("KaspaWalletDB", 2);
+
+      req.onerror = () => resolve([]);
+      req.onupgradeneeded = () => {
+        // DB newly created / upgraded with no existing wallet entries.
+        resolve([]);
+      };
+      req.onsuccess = () => {
+        try {
+          const db = req.result;
+          if (!db.objectStoreNames.contains("MetaDataStore")) {
+            resolve([]);
+            return;
+          }
+
+          const tx = db.transaction("MetaDataStore", "readonly");
+          const store = tx.objectStore("MetaDataStore");
+          const keysReq = store.getAllKeys();
+
+          keysReq.onerror = () => resolve([]);
+          keysReq.onsuccess = () => {
+            const keys = Array.isArray(keysReq.result) ? keysReq.result : [];
+            const wallets = keys
+              .map((key) => String(key ?? "").trim())
+              .filter((name) => name.length > 0)
+              .map((name) => ({ filename: name, title: name }));
+            resolve(wallets);
+          };
+        } catch {
+          resolve([]);
+        }
+      };
+    });
   }
 
   /**
@@ -2117,8 +2165,7 @@ export class KKGameEngine {
     }
 
     // ── Lobby fallback: find any peer who isn't me ──
-    const lobbyMembers =
-      this._lobby?.members ?? this._lobby?.lobbyInfo?.members;
+    const lobbyMembers = this._lobby?.members ?? this._lobby?.lobbyInfo?.members;
     if (Array.isArray(lobbyMembers)) {
       // Find lobby members who don't have a tracked chain yet
       for (const member of lobbyMembers) {
