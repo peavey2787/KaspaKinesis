@@ -90,6 +90,8 @@ await game.sendLobbyMessage({ type: 'hello', text: 'Welcome!' });
 await game.leaveLobby('Game ended');
 ```
 
+**Tip:** Sometimes the initial genesis anchor send is blocked by degradedMode/utxoReady, and there currently isn't any auto retries for the genesis anchor after UTXOs recover. To avoid this, it is recommended to call prepareUtxoPool() on lobby join/host.
+
 ## Custom Action/Ability/Status Mappings
 
 KKGameEngine supports **dynamic mappings** for actions, abilities, items, statuses, emotes, and system events.
